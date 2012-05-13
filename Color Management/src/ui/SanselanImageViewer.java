@@ -132,47 +132,62 @@ public class SanselanImageViewer extends JFrame
         menuBar = new JMenuBar();
 
         // File
-        JMenu menuFile = new JMenu();
-        menuFile.setText("File");
-        menuBar.add(menuFile);
+        JMenu menu = new JMenu();
+        menu.setText("File");
+        menuBar.add(menu);
 
         // File Open
-        JMenuItem menuFileOpen = new JMenuItem();
-        menuFileOpen.setText("Open...");
-        menuFileOpen.addActionListener(new ActionListener() {
+        JMenuItem menuItem = new JMenuItem();
+        menuItem.setText("Open...");
+        menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 open();
             }
         });
-        menuFile.add(menuFileOpen);
+        menu.add(menuItem);
 
         JSeparator separator = new JSeparator();
-        menuFile.add(separator);
+        menu.add(separator);
 
         // File Exit
-        JMenuItem menuFileExit = new JMenuItem();
-        menuFileExit.setText("Exit");
-        menuFileExit.addActionListener(new ActionListener() {
+        menuItem = new JMenuItem();
+        menuItem.setText("Exit");
+        menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 quit();
             }
         });
-        menuFile.add(menuFileExit);
+        menu.add(menuItem);
+
+        // Tools
+        menu = new JMenu();
+        menu.setText("Tools");
+        menuBar.add(menu);
+
+        // Tools VCGT
+        menuItem = new JMenuItem();
+        menuItem.setText("Embedded Profile Info...");
+        menuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                showEmbeddedProfileInfo();
+            }
+        });
+        menu.add(menuItem);
 
         // Help
-        JMenu menuHelp = new JMenu();
-        menuHelp.setText("Help");
-        menuBar.add(menuHelp);
+        menu = new JMenu();
+        menu.setText("Help");
+        menuBar.add(menu);
 
-        JMenuItem menuHelpAbout = new JMenuItem();
-        menuHelpAbout.setText("About");
-        menuHelpAbout.addActionListener(new ActionListener() {
+        menuItem = new JMenuItem();
+        menuItem.setText("About");
+        menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 JOptionPane.showMessageDialog(null, new AboutBoxEvansPanel(
                     title), "About", JOptionPane.PLAIN_MESSAGE);
             }
         });
-        menuHelp.add(menuHelpAbout);
+        menu.add(menuItem);
     }
 
     // private BufferedImage getImage(File file) {
@@ -438,6 +453,28 @@ public class SanselanImageViewer extends JFrame
             }
         }
         return info;
+    }
+
+    /**
+     * Brings up a JFrame to show the embedded profile info if there is any.
+     */
+    public void showEmbeddedProfileInfo() {
+        try {
+            ICC_Profile profile = SanselanImageViewer.getICCProfile(file);
+            if(profile == null) {
+                Utils.errMsg("There is no embedded profile");
+                return;
+            }
+            byte[] data = profile.getData();
+            ICCProfileViewer profileViewer = new ICCProfileViewer();
+            profileViewer.run(data);
+        } catch(ImageReadException ex) {
+            Utils.excMsg("Error reading embedded profile", ex);
+            return;
+        } catch(IOException ex) {
+            Utils.excMsg("Error getting embedded profile", ex);
+            return;
+        }
     }
 
     /**

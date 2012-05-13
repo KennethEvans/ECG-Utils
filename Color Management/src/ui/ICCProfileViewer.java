@@ -31,7 +31,7 @@ public class ICCProfileViewer extends JFrame
 {
     public static final boolean USE_START_FILE_NAME = true;
     private static final long serialVersionUID = 1L;
-    private static final String title = "ICC Profile Viewer";
+    private static final String TITLE = "ICC Profile Viewer";
     // private static final String DEFAULT_PROFILE =
     // "C:/Windows/System32/spool/drivers/color/AlienwareCustom.icm";
     private static final String DEFAULT_PROFILE = "C:/Windows/System32/spool/drivers/color/xRite-2012-05-04-6500-2.2-090.icc";
@@ -130,10 +130,34 @@ public class ICCProfileViewer extends JFrame
         menuItem.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 JOptionPane.showMessageDialog(null, new AboutBoxEvansPanel(
-                    title), "About", JOptionPane.PLAIN_MESSAGE);
+                    TITLE), "About", JOptionPane.PLAIN_MESSAGE);
             }
         });
         menu.add(menuItem);
+    }
+
+    /**
+     * Loads new data.
+     * 
+     * @param fileName
+     */
+    private void loadData(byte[] data) {
+        if(data == null) {
+            Utils.errMsg("Data is null");
+            return;
+        }
+        setText("");
+        this.setTitle(TITLE);
+
+        try {
+            profileModel.readProfile(data);
+        } catch(Exception ex) {
+            Utils.excMsg("Error reading profile data", ex);
+            return;
+        }
+
+        this.setTitle(profileModel.getProfileName());
+        showIccProfileInfo();
     }
 
     /**
@@ -157,34 +181,6 @@ public class ICCProfileViewer extends JFrame
         }
 
         showIccProfileInfo();
-    }
-
-    /**
-     * Puts the panel in a JFrame and runs the JFrame.
-     */
-    public void run() {
-        try {
-            // Create and set up the window.
-            JFrame.setDefaultLookAndFeelDecorated(true);
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            this.setTitle(title);
-            this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            // frame.setLocationRelativeTo(null);
-
-            // Has to be done here. The menus are not part of the JPanel.
-            initMenus();
-            this.setJMenuBar(menuBar);
-
-            // Display the window
-            this.setBounds(20, 20, WIDTH, HEIGHT);
-            this.setVisible(true);
-            if(USE_START_FILE_NAME) {
-                File file = new File(DEFAULT_PROFILE);
-                loadFile(file);
-            }
-        } catch(Throwable t) {
-            t.printStackTrace();
-        }
     }
 
     /**
@@ -287,11 +283,8 @@ public class ICCProfileViewer extends JFrame
         // Change the axis limits to 0,255
         chart.getXYPlot().getRangeAxis().setRange(0, 255);
         chart.getXYPlot().getDomainAxis().setRange(0, 255);
-        String title = "VCGT Curves";
-        File file = profileModel.getFile();
-        if(file != null) {
-            title = file.getName();
-        }
+        // String title = "VCGT Curves";
+        String title = profileModel.getDisplayName();
         app.run(title);
         JFrame frame = app.getFrame();
         frame.setSize(new Dimension(WIDTH, WIDTH));
@@ -309,6 +302,62 @@ public class ICCProfileViewer extends JFrame
         // }
         info += profileModel.getInfo() + LS;
         appendText(info);
+    }
+
+    /**
+     * Puts the panel in a JFrame and runs the JFrame for the given profile
+     * data.
+     * 
+     * @param data The profile data.
+     */
+    public void run(byte[] data) {
+        try {
+            // Create and set up the window.
+            JFrame.setDefaultLookAndFeelDecorated(true);
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            this.setTitle(TITLE);
+            this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            // frame.setLocationRelativeTo(null);
+
+            // Has to be done here. The menus are not part of the JPanel.
+            initMenus();
+            this.setJMenuBar(menuBar);
+
+            // Display the window
+            this.setBounds(20, 20, WIDTH, HEIGHT);
+            this.setVisible(true);
+            loadData(data);
+        } catch(Throwable t) {
+            t.printStackTrace();
+        }
+    }
+
+    /**
+     * Puts the panel in a JFrame and runs the JFrame.
+     */
+    public void run() {
+        try {
+            // Create and set up the window.
+            JFrame.setDefaultLookAndFeelDecorated(true);
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            this.setTitle(TITLE);
+            this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            // frame.setLocationRelativeTo(null);
+
+            // Has to be done here. The menus are not part of the JPanel.
+            initMenus();
+            this.setJMenuBar(menuBar);
+
+            // Display the window
+            this.setBounds(20, 20, WIDTH, HEIGHT);
+            this.setVisible(true);
+            if(USE_START_FILE_NAME) {
+                File file = new File(DEFAULT_PROFILE);
+                loadFile(file);
+            }
+        } catch(Throwable t) {
+            t.printStackTrace();
+        }
     }
 
     /**

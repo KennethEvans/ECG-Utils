@@ -118,6 +118,13 @@ public class ICCProfileModel
 
     // Profile routines
 
+    /**
+     * Reads an ICC profile from the given file and sets the variables for this
+     * instance.
+     * 
+     * @param file
+     * @throws Exception
+     */
     public void readProfile(File file) throws Exception {
         this.file = file;
         if(file == null) return;
@@ -134,7 +141,28 @@ public class ICCProfileModel
     }
 
     /**
-     * Reads the file with the given filename using ICC_Profile.getInstance().
+     * Reads an ICC profile from the given data and sets the variables for this
+     * instance.
+     * 
+     * @param data Profile data.
+     * @throws Exception
+     */
+    public void readProfile(byte[] data) throws Exception {
+        // Set the file to null
+        this.file = null;
+
+        // Get the profile
+        profile = ICC_Profile.getInstance(data);
+        // This should be the same as the input data
+        // TODO check this
+        this.data = profile.getData();
+        // Make the tags array
+        makeFileTagsArray();
+    }
+
+    /**
+     * Reads the file with the given filename using ICC_Profile.getInstance()
+     * and returns the profile.
      * 
      * @param fileName
      * 
@@ -148,7 +176,8 @@ public class ICCProfileModel
     }
 
     /**
-     * Reads the given file using ICC_Profile.getInstance().
+     * Reads the given file using ICC_Profile.getInstance() and returns the
+     * profile.
      * 
      * @param file The file to read.
      * 
@@ -234,7 +263,7 @@ public class ICCProfileModel
     }
 
     /**
-     * Make the array of tag table entries from the file.
+     * Make the array of tag table entries from the data.
      */
     public void makeFileTagsArray() {
         if(data == null) {
@@ -245,9 +274,9 @@ public class ICCProfileModel
     }
 
     /**
-     * Gets the tag table from the given data for the whole file.
+     * Gets the tag table from the given data..
      * 
-     * @param data Data for the whole file.
+     * @param data Data for the whole profile.
      * @param tagArray Tags array (must be derived from the data).
      * @return
      */
@@ -537,31 +566,50 @@ public class ICCProfileModel
         return string;
     }
 
-    // /**
-    // * Gets the profile name from the given profile.
-    // *
-    // * @param profile The profile.
-    // * @return
-    // */
-    // public static String getProfileName(ICC_Profile profile) {
-    // String desc = null;
-    // // Get the ICC profile tag
-    // // It is a Structure containing invariant and localizable
-    // // versions of the profile name for display.
-    // // Bytes 0-3 are "desc". Bytes 4-7 are nulls. Bytes 8-11 are the
-    // // length of the ASCII invariant profile name. The ASCII invariant
-    // // part starts at 12 and should end with a null.
-    // byte[] data = profile.getData(ICC_Profile.icSigProfileDescriptionTag);
-    // if(data != null && data.length > 12) {
-    // desc = new String(data).substring(12);
-    // // Find any nulls
-    // int pos = desc.indexOf('\0');
-    // if(pos > -1) {
-    // desc = desc.substring(0, pos);
-    // }
-    // }
-    // return desc;
-    // }
+    /**
+     * Gets the profile name for this instance.
+     * 
+     * @return
+     */
+    public String getProfileName() {
+        return getStringType(getTagData("desc"));
+    }
+
+    /**
+     * Gets the display name for this instance. The name is the file path name
+     * if there is a file and the profile name otherwise. Use getProfileName to
+     * get the profile name independent of the file.
+     * 
+     * @return
+     * @see #getProfileName
+     */
+    public String getDisplayName() {
+        String name = null;
+        if(file != null) {
+            name = file.getPath();
+        } else {
+            name = getStringType(getTagData("desc"));
+        }
+        return name;
+    }
+
+    /**
+     * Gets the short display name for this instance. The name is the file short
+     * name if there is a file and the profile name otherwise. Use
+     * getProfileName to get the profile name independent of the file.
+     * 
+     * @return
+     * @see #getProfileName
+     */
+    public String getShortDisplayName() {
+        String name = null;
+        if(file != null) {
+            name = file.getName();
+        } else {
+            name = getStringType(getTagData("desc"));
+        }
+        return name;
+    }
 
     /**
      * Gets the version as an array {major, minor, bugFix}.
@@ -980,7 +1028,9 @@ public class ICCProfileModel
             return info;
         }
 
-        info += file.getPath() + LS;
+        if(file != null) {
+            info += file.getPath() + LS;
+        }
 
         // info += "Profile Name: " + getProfileName(profile) + LS;
         info += "Profile Name: " + getStringType(getTagData("desc")) + LS;
@@ -1000,9 +1050,7 @@ public class ICCProfileModel
 
         // Size
         info += "Profile size: " + profile.getData().length + LS;
-        if(file == null) {
-            info += "File size: No file loaded" + LS;
-        } else {
+        if(file != null) {
             info += "File size: " + file.length() + LS;
         }
 
@@ -1015,10 +1063,10 @@ public class ICCProfileModel
             info += "  Version integer: "
                 + String.format("0x%x", getVersionInteger(data)) + LS;
         } catch(Exception ex) {
-            info += stringExcMsg("Error reading version from file", ex);
+            info += stringExcMsg("Error reading version", ex);
         }
 
-        // Version dump from file
+        // Version dump from data
         info += "  Version data: ";
         bytes = getSlice(data, 8, 4);
         info += getDataDump(bytes);
@@ -1033,7 +1081,7 @@ public class ICCProfileModel
         try {
             info += getRenderingIntent(data);
         } catch(Exception ex) {
-            info += stringExcMsg("Error reading rendering intent from file", ex);
+            info += stringExcMsg("Error reading rendering intent", ex);
         }
         info += LS;
 
@@ -1169,7 +1217,7 @@ public class ICCProfileModel
             info += "Tag Table:" + LS;
             info += getTagTable(data);
         } catch(Exception ex) {
-            info += stringExcMsg("Error getting file tag table", ex);
+            info += stringExcMsg("Error getting tag table", ex);
         }
         info += LS;
 
