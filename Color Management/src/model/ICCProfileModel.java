@@ -1157,11 +1157,11 @@ public class ICCProfileModel
                 info += "Tone Response Curve [TRC]: " + LS;
                 for(i = 0; i < profile.getNumComponents(); i++) {
                     if(i == ICC_ProfileRGB.REDCOMPONENT) {
-                        info += "  Red:\t";
+                        info += "  Red:  \t";
                     } else if(i == ICC_ProfileRGB.GREENCOMPONENT) {
                         info += "  Green:\t";
                     } else if(i == ICC_ProfileRGB.BLUECOMPONENT) {
-                        info += "  Blue:\t";
+                        info += "  Blue: \t";
                     } else {
                         info += "Unknown";
                     }
@@ -1267,14 +1267,14 @@ public class ICCProfileModel
                     for(i = 0; i < nChannels; i++) {
                         if(i == ICC_ProfileRGB.REDCOMPONENT) {
                             if(nChannels == 1) {
-                                info += "  All:\t";
+                                info += "  All:  \t";
                             } else {
-                                info += "  Red:\t";
+                                info += "  Red:  \t";
                             }
                         } else if(i == ICC_ProfileRGB.GREENCOMPONENT) {
                             info += "  Green:\t";
                         } else if(i == ICC_ProfileRGB.BLUECOMPONENT) {
-                            info += "  Blue:\t";
+                            info += "  Blue: \t";
                         } else {
                             info += "Unknown";
                         }
