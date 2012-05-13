@@ -6,8 +6,10 @@ import java.awt.Dimension;
 import java.awt.color.ICC_Profile;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 
 import javax.swing.JFileChooser;
@@ -428,7 +430,19 @@ public class SanselanImageViewer extends JFrame
             IccProfileParser parser = new IccProfileParser();
             IccProfileInfo iccProfileInfo = parser.getICCProfileInfo(bytes);
             if(iccProfileInfo != null) {
+                // KLUDGE
+                // iccProfileInfo.toString() prints to System.out
+                // Get around that by redirecting to a temporary PrintStream
+                // Doesn't work to set System.out to null
+                // (System.out.println() gives exception in that case)
+                PrintStream oldOut = System.out;
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                PrintStream ps = new PrintStream(baos);
+                System.setOut(ps);
                 String infoString = iccProfileInfo.toString();
+                ps.close();
+                System.setOut(oldOut);
+                // End KLUDGE
                 String[] tokens = infoString.split(LS);
                 for(String token : tokens) {
                     info += "  " + token + LS;
