@@ -37,7 +37,7 @@ public class ImageWriteExample
         BufferedImage image = Sanselan.getBufferedImage(file);
 
         ImageFormat format = ImageFormat.IMAGE_FORMAT_TIFF;
-        Map params = new HashMap();
+        Map<String, Integer> params = new HashMap<String, Integer>();
 
         // set optional parameters if you like
         params.put(SanselanConstants.PARAM_KEY_COMPRESSION, new Integer(

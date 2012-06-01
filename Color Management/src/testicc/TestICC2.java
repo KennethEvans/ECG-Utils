@@ -25,7 +25,6 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 /**
  * TestICC2: This version uses ICCProfile.getData(). The data returned is
@@ -511,8 +510,8 @@ public class TestICC2 extends JPanel
     public void run() {
         try {
             // Create and set up the window.
-            JFrame.setDefaultLookAndFeelDecorated(true);
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            // JFrame.setDefaultLookAndFeelDecorated(true);
+            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             JFrame frame = new JFrame("Test ICC Profile");
             frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             // frame.setLocationRelativeTo(null);

@@ -16,7 +16,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 import misc.AboutBoxEvansPanel;
 import model.ICCProfileModel;
@@ -66,6 +65,28 @@ public class ICCProfileViewer extends JFrame
         // enough space for 5 rows and 30 columns.
         textArea = new JTextArea(25, 30);
         textArea.setEditable(false);
+//        // DEBUG
+//        String lafName = UIManager.getSystemLookAndFeelClassName();
+//        Font font = textArea.getFont();
+//        System.out.println("JTextArea:");
+//        System.out.println("  Name: " + font.getName());
+//        System.out.println("  FontName: " + font.getFontName());
+//        System.out.println("  Family: " + font.getFamily());
+//        System.out.println("  Size: " + font.getSize());
+//        System.out.println("  Style: " + font.getStyle());
+//        System.out.println("  LAF Name: " + lafName);
+//        String[] keys = {"TextArea.font", "Dialog.font"};
+//        for(String key : keys) {
+//            System.out.println("  Key: " + key);
+//            Font uiFont = UIManager.getFont(key);
+//            if(uiFont != null) {
+//                System.out.println("    Name: " + uiFont.getName());
+//                System.out.println("    FontName: " + uiFont.getFontName());
+//                System.out.println("    Family: " + uiFont.getFamily());
+//                System.out.println("    Size: " + uiFont.getSize());
+//                System.out.println("    Style: " + uiFont.getStyle());
+//            }
+//        }
         JScrollPane scrollPane = new JScrollPane(textArea);
         this.add(scrollPane, BorderLayout.CENTER);
     }
@@ -313,8 +334,9 @@ public class ICCProfileViewer extends JFrame
     public void run(byte[] data) {
         try {
             // Create and set up the window.
-            JFrame.setDefaultLookAndFeelDecorated(true);
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            // JFrame.setDefaultLookAndFeelDecorated(true);
+            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            // SwingUtilities.updateComponentTreeUI(this);
             this.setTitle(TITLE);
             this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             // frame.setLocationRelativeTo(null);
@@ -328,7 +350,7 @@ public class ICCProfileViewer extends JFrame
             this.setVisible(true);
             loadData(data);
         } catch(Throwable t) {
-            t.printStackTrace();
+            Utils.excMsg("Error running ICCProfileViewer", t);
         }
     }
 
@@ -338,8 +360,9 @@ public class ICCProfileViewer extends JFrame
     public void run() {
         try {
             // Create and set up the window.
-            JFrame.setDefaultLookAndFeelDecorated(true);
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            // JFrame.setDefaultLookAndFeelDecorated(true);
+            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            // SwingUtilities.updateComponentTreeUI(this);
             this.setTitle(TITLE);
             this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             // frame.setLocationRelativeTo(null);
@@ -356,7 +379,7 @@ public class ICCProfileViewer extends JFrame
                 loadFile(file);
             }
         } catch(Throwable t) {
-            t.printStackTrace();
+            Utils.excMsg("Error running ICCProfileViewer", t);
         }
     }
 

@@ -27,7 +27,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -231,8 +230,8 @@ public class VCGTViewer extends JFrame
     public void run() {
         try {
             // Create and set up the window.
-            JFrame.setDefaultLookAndFeelDecorated(true);
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            // JFrame.setDefaultLookAndFeelDecorated(true);
+            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             this.setTitle(title);
             this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             // frame.setLocationRelativeTo(null);

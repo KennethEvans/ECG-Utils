@@ -35,7 +35,7 @@ public class ImageReadExample
 {
     public static BufferedImage imageReadExample(File file)
         throws ImageReadException, IOException {
-        Map params = new HashMap();
+        Map<String, ManagedImageBufferedImageFactory> params = new HashMap<String, ManagedImageBufferedImageFactory>();
 
         // set optional parameters if you like
         params.put(SanselanConstants.BUFFERED_IMAGE_FACTORY,

@@ -2,6 +2,7 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.color.ICC_Profile;
 import java.awt.event.ActionEvent;
@@ -11,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Date;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -24,7 +26,6 @@ import javax.swing.JSeparator;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 import misc.AboutBoxEvansPanel;
 import net.kenevans.imagemodel.ImageModel;
@@ -35,7 +36,8 @@ import org.apache.sanselan.ImageInfo;
 import org.apache.sanselan.ImageReadException;
 import org.apache.sanselan.Sanselan;
 import org.apache.sanselan.common.IImageMetadata;
-import org.apache.sanselan.formats.jpeg.JpegImageMetadata;
+import org.apache.sanselan.common.ImageMetadata;
+import org.apache.sanselan.common.ImageMetadata.Item;
 import org.apache.sanselan.formats.tiff.TiffImageMetadata;
 import org.apache.sanselan.icc.IccProfileInfo;
 import org.apache.sanselan.icc.IccProfileParser;
@@ -55,6 +57,9 @@ public class SanselanImageViewer extends JFrame
     private static final String FILENAME = "C:/users/evans/Pictures/ImageBrowser Test/D7A_0670.jpg";
     // private static final String FILENAME =
     // "C:/users/evans/Pictures/ImageBrowser Test/Breault2.ProPhoto.jpg";
+    // private static final String FILENAME =
+    // "C:/users/evans/Pictures/Digital Photos/Better/DSC_5895a.jpg";
+
     public static final boolean USE_GUI = true;
     public static final boolean USE_START_FILE_NAME = true;
     private static final boolean USE_STATUS_BAR = true;
@@ -64,7 +69,10 @@ public class SanselanImageViewer extends JFrame
     private static final int WIDTH = 600;
     private static final int HEIGHT = 800;
     private static final int MAIN_PANE_DIVIDER_LOCATION = HEIGHT / 3;
-    private String defaultPath = "C:/users/evans/Pictures/ImageBrowser Test";
+    // private String defaultPath = "C:/users/evans/Pictures/ImageBrowser Test";
+    // private String defaultPath =
+    // "C:/users/evans/Pictures/Digital Photos/Better";
+    private String defaultPath = "C:/users/evans/Pictures";
     private File file;
 
     private Container contentPane = this.getContentPane();
@@ -236,8 +244,8 @@ public class SanselanImageViewer extends JFrame
     public void run() {
         try {
             // Create and set up the window.
-            JFrame.setDefaultLookAndFeelDecorated(true);
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            // JFrame.setDefaultLookAndFeelDecorated(true);
+            // UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             this.setTitle(title);
             this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
             // frame.setLocationRelativeTo(null);
@@ -254,42 +262,8 @@ public class SanselanImageViewer extends JFrame
                 loadFile(file);
             }
         } catch(Throwable t) {
-            t.printStackTrace();
+            Utils.excMsg("Error running SanselanImageViewer", t);
         }
-    }
-
-    /**
-     * Loads a new file.
-     * 
-     * @param fileName
-     */
-    private void loadFile(File file) {
-        this.file = file;
-        if(file == null) {
-            Utils.errMsg("File is null");
-            return;
-        }
-
-        this.setTitle(file.getName());
-        setText(file.getPath() + Utils.LS + Utils.LS);
-
-        // Use the ImageModel for the image since
-        // Sanselan can't handle images from JPEGS
-        imageModel.readImage(file);
-        imagePanel.zoomFitIfLarger();
-
-        // // Sanselan can't handle images from JPEGS
-        // BufferedImage image = getImage(file);
-        // if(image == null) {
-        // Utils.errMsg("Image is null");
-        // return;
-        // }
-        // imageModel.replaceImage(image);
-
-        // Show the selected info
-        showIccProfileInfo();
-        showMetaDataInfo();
-        showImageInfo();
     }
 
     /**
@@ -314,6 +288,99 @@ public class SanselanImageViewer extends JFrame
         return icc;
     }
 
+    /**
+     * Loads a new file.
+     * 
+     * @param fileName
+     */
+    private void loadFile(final File file) {
+        this.file = file;
+        if(file == null) {
+            Utils.errMsg("File is null");
+            return;
+        }
+
+        // Temporary fix for not getting a wait cursor to work
+        setText("Reading " + file.getPath() + Utils.LS + Utils.LS);
+        setTitle(file.getName());
+        imageModel.reset();
+
+        // Needs to be done this way to allow the text to change before reading
+        // the image.
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                try {
+                    // Use the ImageModel for the image since
+                    // Sanselan can't handle images from JPEGS
+                    imageModel.readImage(file);
+                    imagePanel.zoomFitIfLarger();
+
+                    // // Sanselan can't handle images from JPEGS
+                    // BufferedImage image = getImage(file);
+                    // if(image == null) {
+                    // Utils.errMsg("Image is null");
+                    // return;
+                    // }
+                    // imageModel.replaceImage(image);
+
+                    // Show the selected info
+                    setTitle(file.getName());
+                    setText(file.getPath() + Utils.LS + Utils.LS);
+                    showFileInfo();
+                    showIccProfileInfo();
+                    showMetaDataInfo();
+                    showImageInfo();
+                } catch(Exception ex) {
+                    String msg = "Error loading file: " + file.getPath();
+                    final String fullMsg = msg + LS + "Exception: " + ex + LS
+                        + ex.getMessage();
+                    // Utils.excMsg(msg, ex);
+                    appendText(LS + fullMsg);
+                } catch(Error err) {
+                    String msg = "Error loading file: " + file.getPath();
+                    final String fullMsg = msg + LS + "Exception: " + err + LS
+                        + err.getMessage();
+                    // Utils.excMsg(msg, err);
+                    appendText(fullMsg);
+                }
+            }
+        });
+    }
+
+    // /**
+    // * Loads a new file.
+    // *
+    // * @param fileName
+    // */
+    // private void loadFile(File file) {
+    // this.file = file;
+    // if(file == null) {
+    // Utils.errMsg("File is null");
+    // return;
+    // }
+    //
+    // this.setTitle(file.getName());
+    // setText(file.getPath() + Utils.LS + Utils.LS);
+    //
+    // // Use the ImageModel for the image since
+    // // Sanselan can't handle images from JPEGS
+    // imageModel.readImage(file);
+    // imagePanel.zoomFitIfLarger();
+    //
+    // // // Sanselan can't handle images from JPEGS
+    // // BufferedImage image = getImage(file);
+    // // if(image == null) {
+    // // Utils.errMsg("Image is null");
+    // // return;
+    // // }
+    // // imageModel.replaceImage(image);
+    //
+    // // Show the selected info
+    // showIccProfileInfo();
+    // showMetaDataInfo();
+    // showImageInfo();
+    // }
+
     private void showMetaDataInfo() {
         String info = "Metadata" + LS;
         try {
@@ -324,6 +391,15 @@ public class SanselanImageViewer extends JFrame
         } catch(IOException ex) {
             Utils.excMsg("Error getting metadata from file", ex);
         }
+    }
+
+    private void showFileInfo() {
+        if(file == null) {
+            return;
+        }
+        String info = "File Information" + LS;
+        info += getFileInfo(file) + LS;
+        appendText(info);
     }
 
     private void showIccProfileInfo() {
@@ -376,7 +452,16 @@ public class SanselanImageViewer extends JFrame
             defaultPath = chooser.getSelectedFile().getParentFile().getPath();
             // Process the file
             File file = chooser.getSelectedFile();
-            loadFile(file);
+            // Set the cursor in case it takes a long time
+            // This isn't working. The cursor apparently doesn't get set
+            // until after it is done.
+            Cursor oldCursor = getCursor();
+            try {
+                setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                loadFile(file);
+            } finally {
+                setCursor(oldCursor);
+            }
         }
     }
 
@@ -387,28 +472,92 @@ public class SanselanImageViewer extends JFrame
         System.exit(0);
     }
 
+    /**
+     * Gets information from Sanselan.getMetadata.
+     * 
+     * @param file
+     * @return
+     * @throws ImageReadException
+     * @throws IOException
+     */
     public static String getMetadataInfo(File file) throws ImageReadException,
         IOException {
         String info = "";
         // Get all metadata stored in EXIF format (ie. from JPEG or TIFF).
         // org.w3c.dom.Node node = Sanselan.getMetadataObsolete(imageBytes);
         IImageMetadata metadata = Sanselan.getMetadata(file);
-        if(metadata instanceof JpegImageMetadata) {
-            JpegImageMetadata jpegMetadata = (JpegImageMetadata)metadata;
-            ArrayList<?> items = jpegMetadata.getItems();
-            if(items == null) {
-                info += "Metadata items is null" + LS;
-            }
-            info += "There are " + items.size() + " metadata items" + LS;
-            for(int i = 0; i < items.size(); i++) {
-                TiffImageMetadata.Item item = (TiffImageMetadata.Item)items
+        if(metadata == null) {
+            return "  Metadata is null" + LS;
+        }
+        ArrayList<?> items = metadata.getItems();
+        if(items == null) {
+            info += "  Metadata items is null" + LS;
+        }
+        info += "There are " + items.size() + " metadata items" + LS;
+        for(int i = 0; i < items.size(); i++) {
+            Item item = (Item)items.get(i);
+            if(item instanceof TiffImageMetadata.Item) {
+                TiffImageMetadata.Item item1 = (TiffImageMetadata.Item)items
                     .get(i);
-                info += "  " + item + LS;
+                info += "  TIFF " + item1 + LS;
+            } else if(item instanceof ImageMetadata.Item) {
+                ImageMetadata.Item item1 = (ImageMetadata.Item)items.get(i);
+                info += "  IMAGE " + item1 + LS;
+            } else {
+                info += "  " + item.getClass().getName() + " " + item + LS;
             }
         }
+        // if(metadata instanceof JpegImageMetadata) {
+        // JpegImageMetadata jpegMetadata = (JpegImageMetadata)metadata;
+        // metadata.
+        // ArrayList<?> items = jpegMetadata.getItems();
+        // if(items == null) {
+        // info += "Metadata items is null" + LS;
+        // }
+        // info += "There are " + items.size() + " metadata items" + LS;
+        // for(int i = 0; i < items.size(); i++) {
+        // Item item = (Item)items.get(i);
+        // if(item instanceof TiffImageMetadata.Item) {
+        // TiffImageMetadata.Item item1 = (TiffImageMetadata.Item)items
+        // .get(i);
+        // info += "  TIFF " + item1 + LS;
+        // } else {
+        // info += "  " + item + LS;
+        // }
+        // }
+        // }
         return info;
     }
 
+    /**
+     * Gets file information from the given file.
+     * 
+     * @param file
+     * @return
+     */
+    public static String getFileInfo(File file) {
+        String info = "";
+        if(file == null) {
+            return info;
+        }
+        long length = file.length();
+        info += String.format(
+            "  Length: %d Bytes = %.2f KB = %.2f MB = %.2f GB" + LS, length,
+            length / 1024., length / 1024. / 1024.,
+            length / 1024. / 1024. / 1024.);
+        long lastModified = file.lastModified();
+        info += "  Last Modified: " + new Date(lastModified) + LS;
+        return info;
+    }
+
+    /**
+     * Gets information from Sanselan.getICCProfile.
+     * 
+     * @param file
+     * @return
+     * @throws ImageReadException
+     * @throws IOException
+     */
     public static String getIccProfileInfo(File file)
         throws ImageReadException, IOException {
         String info = "";
@@ -452,6 +601,14 @@ public class SanselanImageViewer extends JFrame
         return info;
     }
 
+    /**
+     * Gets information from Sanselan.getImageInfo.
+     * 
+     * @param file
+     * @return
+     * @throws ImageReadException
+     * @throws IOException
+     */
     public static String getImageInfo(File file) throws ImageReadException,
         IOException {
         String info = "";
@@ -498,7 +655,7 @@ public class SanselanImageViewer extends JFrame
      */
     public static void main1(String[] args) {
         final File file = new File(FILENAME);
-        final SanselanImageViewer app = new SanselanImageViewer();
+        //        final SanselanImageViewer app = new SanselanImageViewer();
 
         System.out.print(file.getPath() + LS + LS);
 
