@@ -15,7 +15,7 @@ public class Utils
     public static final String LS = System.getProperty("line.separator");
 
     /**
-     * Generic method to get a file suing a JFileChooder
+     * Generic method to get a file using a JFileChooser
      * 
      * @param defaultPath
      * @return the File or null if aborted.

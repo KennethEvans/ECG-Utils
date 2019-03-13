@@ -388,7 +388,7 @@ public class MakeHxMSessionFromPDFImage
         types.put("9", "TYPE_USHORT_555_RGB");
         types.put("8", "TYPE_USHORT_565_RGB");
         types.put("11", "TYPE_USHORT_GRAY");
-        Integer type = new Integer(image.getType());
+        Integer type = Integer.valueOf(image.getType());
         String stringType = types.get(type.toString());
         if(stringType == null) stringType = "Unknown";
         info += "Type: " + stringType + " [" + type + "]" + LS;
