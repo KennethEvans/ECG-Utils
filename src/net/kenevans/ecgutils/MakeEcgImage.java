@@ -25,9 +25,6 @@ public class MakeEcgImage
 {
     private static final String DEST_DIR = "C:/Scratch/ECG/Polar ECG/Images";
     private static final String SRC_DIR = "C:/Scratch/ECG/Polar ECG/CSV Files";
-    private static String DEFAULT_DEST_FILENAME = DEST_DIR + "/" + "Test.png";
-    private static String DEFAULT_SRC_FILENAME = SRC_DIR + "/"
-        + "PolarECG-2019-04-30_13-26.csv";
     private static final int WIDTH = 2550;
     private static final int HEIGHT = 3300;
     private static final int GRAPH_WIDTH = 40 * 5;
@@ -106,17 +103,18 @@ public class MakeEcgImage
      * Brings up a JFileChooser to pick the ECG file.
      * 
      * @param L
-     * @return The File or null on failure.
+     * @return The Files selected or null on failure.
      */
-    public static File openEcgFile(String fileName) {
+    public static File[] openEcgFiles(String fileName) {
         JFileChooser chooser = new JFileChooser();
         chooser.setCurrentDirectory(new File(SRC_DIR));
-        chooser.setDialogTitle("Pick ECG File");
+        chooser.setDialogTitle("Pick ECG Files");
+        chooser.setMultiSelectionEnabled(true);
         int result = chooser.showOpenDialog(null);
         if(result != JFileChooser.APPROVE_OPTION) return null;
 
-        File file = chooser.getSelectedFile();
-        return file;
+        File[] files = chooser.getSelectedFiles();
+        return files;
     }
 
     private static void processFile(File file, BufferedImage bi)
@@ -139,33 +137,57 @@ public class MakeEcgImage
 
         BufferedReader in = null;
         in = new BufferedReader(new FileReader(file));
-        String line;
+        String line = "";
 
         g2d.setFont(fontBold);
-        g2d.drawString("Patient:", 97, 143);
+        g2d.drawString("Patient:", 100, 143);
 
         String date = in.readLine();
         g2d.setFont(fontBold);
-        g2d.drawString("Recorded:", 97, 188);
+        g2d.drawString("Recorded:", 100, 188);
         g2d.setFont(font);
-        g2d.drawString(date, 356, 188);
+        g2d.drawString(date, 300, 188);
 
-        line = in.readLine();
-        while(line.startsWith("ID") || line.startsWith("Battery")
-            || line.startsWith("Firmware")) {
+        // Read lines that may not be there
+        boolean repeat = true;
+        while(repeat) {
             line = in.readLine();
+            repeat = false;
+            if(line.startsWith("ID")) {
+                repeat = true;
+                g2d.setFont(fontBold);
+                g2d.drawString("Device ID:", 100, 278);
+                g2d.setFont(font);
+                g2d.drawString(line.substring(5), 300, 278);
+            } else if(line.startsWith("Battery")) {
+                g2d.setFont(fontBold);
+                g2d.drawString("Battery:", 850, 278);
+                g2d.setFont(font);
+                g2d.drawString(line.substring(15), 1025, 278);
+                repeat = true;
+            } else if(line.startsWith("Firmware")) {
+                g2d.setFont(fontBold);
+                g2d.drawString("Firmware:", 500, 278);
+                g2d.setFont(font);
+                g2d.drawString(line.substring(10), 700, 278);
+                repeat = true;
+            } else if(line.startsWith("Firmware")) {
+                repeat = true;
+            }
         }
+
+        // The current line should be notes
         String notes = line;
         g2d.setFont(fontBold);
-        g2d.drawString("Notes:", 982, 143);
+        g2d.drawString("Notes:", 850, 143);
         g2d.setFont(font);
-        g2d.drawString(notes, 1150, 143);
+        g2d.drawString(notes, 1025, 143);
 
         String hr = in.readLine().substring(3);
         g2d.setFont(fontBold);
-        g2d.drawString("Heart Rate:", 96, 232);
+        g2d.drawString("Heart Rate:", 100, 233);
         g2d.setFont(font);
-        g2d.drawString(hr, 355, 232);
+        g2d.drawString(hr, 300, 233);
 
         String[] tokens = in.readLine().split(" ");
         int values = Integer.parseInt(tokens[0]);
@@ -174,9 +196,9 @@ public class MakeEcgImage
         double valueStep = duration / values / .04;
         String durationString = duration + " " + tokens[3];
         g2d.setFont(fontBold);
-        g2d.drawString("Duration:", 637, 232);
+        g2d.drawString("Duration:", 500, 232);
         g2d.setFont(font);
-        g2d.drawString(durationString, 825, 232);
+        g2d.drawString(durationString, 700, 232);
 
         String scale = "Scale: 25 mm/s, 10 mm/mV ";
         g2d.setFont(fontInfo);
@@ -185,10 +207,10 @@ public class MakeEcgImage
         // Do the icon
         BufferedImage image = ImageIO.read(MakeEcgImage.class.getClassLoader()
             .getResource("resources/polar_ecg.png"));
-        g2d.drawImage(image, 2100, 116, null);
+        g2d.drawImage(image, 2050, 116, null);
         g2d.setFont(fontLogo);
         g2d.setPaint(new Color(211, 0, 36));
-        g2d.drawString("Polar ECG", 2210, 180);
+        g2d.drawString("KE.Net ECG", 2170, 180);
 
         // Draw the small curves
         AffineTransform scalingTransform = AffineTransform
@@ -254,35 +276,33 @@ public class MakeEcgImage
             return;
         }
 
-        // File inputFile = new File(DEFAULT_SRC_FILENAME);
-        File inputFile = openEcgFile(null);
-        if(inputFile == null) {
-            System.out.println("Failed to process " + inputFile);
+        System.out.println("MakeEcgImage");
+        File[] inputFiles = openEcgFiles(null);
+        for(File file : inputFiles) {
+            if(file == null) {
+                System.out.println("Failed to process " + file);
+            }
             System.out.println();
-            System.out.println("Aborted");
-            return;
-        }
-        System.out.println("Processing " + inputFile);
-        BufferedImage bi = createImage();
-        try {
-            processFile(inputFile, bi);
-        } catch(Exception ex) {
-            System.out.println("Failed to process " + inputFile);
-            ex.printStackTrace();
-            System.out.println();
-            System.out.println("Aborted");
-            return;
-        }
-        File outputFile = new File(DEST_DIR + "/"
-            + inputFile.getName().replaceFirst("[.][^.]+$", "") + ".png");
-        try {
-            saveImage(bi, outputFile);
-        } catch(Exception ex) {
-            System.out.println("Failed to save " + outputFile);
-            ex.printStackTrace();
-            System.out.println();
-            System.out.println("Aborted");
-            return;
+            System.out.println("Processing " + file);
+            BufferedImage bi = createImage();
+            try {
+                processFile(file, bi);
+            } catch(Exception ex) {
+                System.out.println("Failed to process " + file);
+                ex.printStackTrace();
+                continue;
+            }
+            File outputFile = new File(DEST_DIR + "/"
+                + file.getName().replaceFirst("[.][^.]+$", "") + ".png");
+            try {
+                saveImage(bi, outputFile);
+            } catch(Exception ex) {
+                System.out.println("Failed to save " + outputFile);
+                ex.printStackTrace();
+                System.out.println();
+                System.out.println("Aborted");
+                return;
+            }
         }
 
         System.out.println();
