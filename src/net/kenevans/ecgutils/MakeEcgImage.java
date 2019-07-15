@@ -130,10 +130,10 @@ public class MakeEcgImage
         }
         Graphics2D g2d = bi.createGraphics();
         g2d.setPaint(Color.BLACK);
-        Font font = new Font("TimesRoman", Font.PLAIN, 36);
-        Font fontBold = new Font("TimesRoman", Font.BOLD, 36);
-        Font fontInfo = new Font("TimesRoman", Font.PLAIN, 30);
-        Font fontLogo = new Font("Helvetica", Font.BOLD, 48);
+        Font font = new Font(Font.SANS_SERIF, Font.PLAIN, 36);
+        Font fontBold = new Font(Font.SANS_SERIF, Font.BOLD, 36);
+        Font fontInfo = new Font(Font.SANS_SERIF, Font.PLAIN, 30);
+        Font fontLogo = new Font(Font.SANS_SERIF, Font.BOLD, 48);
 
         BufferedReader in = null;
         in = new BufferedReader(new FileReader(file));
@@ -202,7 +202,7 @@ public class MakeEcgImage
 
         String scale = "Scale: 25 mm/s, 10 mm/mV ";
         g2d.setFont(fontInfo);
-        g2d.drawString(scale, 2117, 350);
+        g2d.drawString(scale, 2075, 350);
 
         // Do the icon
         BufferedImage image = ImageIO.read(MakeEcgImage.class.getClassLoader()
@@ -212,7 +212,7 @@ public class MakeEcgImage
         g2d.setPaint(new Color(211, 0, 36));
         g2d.drawString("KE.Net ECG", 2170, 180);
 
-        // Draw the small curves
+        // Draw the curves
         AffineTransform scalingTransform = AffineTransform
             .getScaleInstance(SCALE, SCALE);
         g2d.setPaint(Color.BLACK);
