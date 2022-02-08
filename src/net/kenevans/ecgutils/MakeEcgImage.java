@@ -1,103 +1,31 @@
 package net.kenevans.ecgutils;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.Graphics2D;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Line2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 
-/*
- * Created on Jun 16, 2019
- * By Kenneth Evans, Jr.
+/**
+ * Created on Jun 16, 2019 By Kenneth Evans, Jr.
  */
-
 public class MakeEcgImage
 {
-    private static final String DEST_DIR = "C:/Scratch/ECG/Polar ECG/Images";
-    private static final String SRC_DIR = "C:/Scratch/ECG/Polar ECG/CSV Files";
-    private static final int WIDTH = 2550;
-    private static final int HEIGHT = 3300;
-    private static final int GRAPH_WIDTH = 40 * 5;
-    private static final int GRAPH_HEIGHT = 48 * 5;
-    private static final int GRAPH_X = 8;
-    private static final int GRAPH_Y = 31;
-    private static final double SCALE = 11.8;
+    public static final String LS = System.getProperty("line.separator");
+    // private static final String DEST_DIR = "C:/Scratch/ECG/Polar ECG/Images";
+    private static final String DEST_DIR = "C:/Scratch/ECG/Test Images";
+    private static final String SRC_DIR = "C:/Scratch/ECG/Polar ECG/CSV";
+
     private static final String IMAGE_TYPE = "png";
-    private static int MINOR_COLOR = 209;
-    private static int MAJOR_COLOR = 140;
-    private static int BLOCK_COLOR = 51;
-    private static int OUTLINE_COLOR = 0;
-    private static int CURVE_COLOR = 0;
-    private static float MINOR_WIDTH = .1f;
-    private static float MAJOR_WIDTH = .2f;
-    private static float BLOCK_WIDTH = .3f;
-    private static float OUTLINE_WIDTH = .5f;
-    private static float CURVE_WIDTH = .3f;
 
     private static BufferedImage bi;
-
-    private static BufferedImage createImage() {
-        bi = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2d = bi.createGraphics();
-        g2d.setBackground(Color.WHITE);
-        g2d.clearRect(0, 0, WIDTH, HEIGHT);
-        AffineTransform scalingTransform = AffineTransform
-            .getScaleInstance(SCALE, SCALE);
-        g2d.transform(scalingTransform);
-        // Draw the small grid lines
-        g2d.setStroke(new BasicStroke(MINOR_WIDTH));
-        g2d.setPaint(new Color(MINOR_COLOR, MINOR_COLOR, MINOR_COLOR));
-        for(int i = 0; i < GRAPH_WIDTH; i++) {
-            g2d.drawLine(GRAPH_X + i, GRAPH_Y, GRAPH_X + i,
-                GRAPH_Y + GRAPH_HEIGHT);
-        }
-        for(int i = 0; i < GRAPH_HEIGHT; i++) {
-            g2d.drawLine(GRAPH_X, GRAPH_Y + i, GRAPH_X + GRAPH_WIDTH,
-                GRAPH_Y + i);
-        }
-        // Draw the large grid lines
-        g2d.setStroke(new BasicStroke(MAJOR_WIDTH));
-        g2d.setPaint(new Color(MAJOR_COLOR, MAJOR_COLOR, MAJOR_COLOR));
-        for(int i = 0; i < GRAPH_WIDTH; i += 5) {
-            g2d.drawLine(GRAPH_X + i, GRAPH_Y, GRAPH_X + i,
-                GRAPH_Y + GRAPH_HEIGHT);
-        }
-        for(int i = 0; i < GRAPH_HEIGHT; i += 5) {
-            g2d.drawLine(GRAPH_X, GRAPH_Y + i, GRAPH_X + GRAPH_WIDTH,
-                GRAPH_Y + i);
-        }
-        // Draw the block grid lines
-        g2d.setStroke(new BasicStroke(BLOCK_WIDTH));
-        g2d.setPaint(new Color(BLOCK_COLOR, BLOCK_COLOR, BLOCK_COLOR));
-        for(int i = 0; i < GRAPH_WIDTH; i += 25) {
-            g2d.drawLine(GRAPH_X + i, GRAPH_Y, GRAPH_X + i,
-                GRAPH_Y + GRAPH_HEIGHT);
-        }
-        for(int i = 0; i < GRAPH_HEIGHT; i += 60) {
-            g2d.drawLine(GRAPH_X, GRAPH_Y + i, GRAPH_X + GRAPH_WIDTH,
-                GRAPH_Y + i);
-        }
-        // Draw the outline
-        g2d.setStroke(new BasicStroke(OUTLINE_WIDTH));
-        g2d.setPaint(new Color(OUTLINE_COLOR, OUTLINE_COLOR, OUTLINE_COLOR));
-        g2d.drawLine(GRAPH_X, GRAPH_Y, GRAPH_X + GRAPH_WIDTH, GRAPH_Y);
-        g2d.drawLine(GRAPH_X, GRAPH_Y + GRAPH_HEIGHT, GRAPH_X + GRAPH_WIDTH,
-            GRAPH_Y + GRAPH_HEIGHT);
-        g2d.drawLine(GRAPH_X, GRAPH_Y, GRAPH_X, GRAPH_Y + GRAPH_HEIGHT);
-        g2d.drawLine(GRAPH_X + GRAPH_WIDTH, GRAPH_Y, GRAPH_X + GRAPH_WIDTH,
-            GRAPH_Y + GRAPH_HEIGHT);
-        return bi;
-    }
 
     /**
      * Brings up a JFileChooser to pick the ECG file.
@@ -105,20 +33,31 @@ public class MakeEcgImage
      * @param L
      * @return The Files selected or null on failure.
      */
-    public static File[] openEcgFiles(String fileName) {
+    public static File[] openEcgFiles(File suggestedFile) {
         JFileChooser chooser = new JFileChooser();
         chooser.setCurrentDirectory(new File(SRC_DIR));
+        chooser.setSelectedFile(suggestedFile);
         chooser.setDialogTitle("Pick ECG Files");
         chooser.setMultiSelectionEnabled(true);
         int result = chooser.showOpenDialog(null);
         if(result != JFileChooser.APPROVE_OPTION) return null;
-
         File[] files = chooser.getSelectedFiles();
         return files;
     }
 
-    private static void processFile(File file, BufferedImage bi)
-        throws Exception {
+    public static File saveEcgFile(File suggestedFile) {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setCurrentDirectory(new File(DEST_DIR));
+        chooser.setSelectedFile(suggestedFile);
+        chooser.setDialogTitle("Save Image File");
+        chooser.setMultiSelectionEnabled(false);
+        int result = chooser.showSaveDialog(null);
+        if(result != JFileChooser.APPROVE_OPTION) return null;
+        File file = chooser.getSelectedFile();
+        return file;
+    }
+
+    private static void processFile(File file) throws Exception {
         if(file == null) {
             System.out.println("processFile: file is null");
             return;
@@ -128,137 +67,125 @@ public class MakeEcgImage
                 .println("processFile: Does not exist: " + file.getPath());
             return;
         }
-        Graphics2D g2d = bi.createGraphics();
-        g2d.setPaint(Color.BLACK);
-        Font font = new Font(Font.SANS_SERIF, Font.PLAIN, 36);
-        Font fontBold = new Font(Font.SANS_SERIF, Font.BOLD, 36);
-        Font fontInfo = new Font(Font.SANS_SERIF, Font.PLAIN, 30);
-        Font fontLogo = new Font(Font.SANS_SERIF, Font.BOLD, 48);
 
-        BufferedReader in = null;
-        in = new BufferedReader(new FileReader(file));
-        String line = "";
+        double samplingRate = 130.;
+        BufferedImage logo;
+        String patientName = "";
+        String date = "NA";
+        String id = "NA";
+        String firmware = "NA";
+        String batteryLevel = "NA";
+        String notes = "NA";
+        String devhr = "NA";
+        String calchr = "NA";
+        String nPeaks = "NA";
+        String duration = "NA";
+        double[] ecgvals = null;
+        boolean[] peakvals = null;
 
-        g2d.setFont(fontBold);
-        g2d.drawString("Patient:", 100, 143);
+        // Check for new format
+        boolean newFormat = true;
+        try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+            String line = in.readLine();
+            if(!line.startsWith("application=")) newFormat = false;
+        }
 
-        String date = in.readLine();
-        g2d.setFont(fontBold);
-        g2d.drawString("Recorded:", 100, 188);
-        g2d.setFont(font);
-        g2d.drawString(date, 300, 188);
+        // Reset to the beginning
+        List<Double> ecgList = new ArrayList<>();
+        boolean header = true;
+        try (BufferedReader in = new BufferedReader(new FileReader(file))) {
+            String line = "";
+            if(newFormat) {
+                while(header) {
+                    line = in.readLine();
+                    try {
+                        Double.parseDouble(line);
+                        header = false;
+                        ecgList.add(Double.parseDouble(line));
+                    } catch(NumberFormatException ex) {
+                        header = true;
+                    }
+                    if(header) {
+                        int start = line.indexOf("=") + 1;
+                        if(line.startsWith("stoptime")) {
+                            date = line.substring(start);
+                        } else if(line.startsWith("duration")) {
+                            duration = line.substring(start);
+                        } else if(line.startsWith("nsamples")) {
+                            // Do nothing
+                        } else if(line.startsWith("samplingrate")) {
+                            // Do nothing
+                        } else if(line.startsWith("stopdevicehr")) {
+                            devhr = line.substring(start);
+                        } else if(line.startsWith("stopcalculatedhr")) {
+                            calchr = line.substring(start);
+                        } else if(line.startsWith("devicename")) {
+                            // Do nothing
+                        } else if(line.startsWith("deviceid")) {
+                            id = line.substring(start);
+                        } else if(line.startsWith("battery")) {
+                            batteryLevel = line.substring(start);
+                        } else if(line.startsWith("firmware")) {
+                            firmware = line.substring(start);
+                        } else if(line.startsWith("note")) {
+                            notes = line.substring(start);
+                        }
+                    }
+                }
 
-        // Read lines that may not be there
-        boolean repeat = true;
-        while(repeat) {
-            line = in.readLine();
-            repeat = false;
-            if(line.startsWith("ID")) {
-                repeat = true;
-                g2d.setFont(fontBold);
-                g2d.drawString("Device ID:", 100, 278);
-                g2d.setFont(font);
-                g2d.drawString(line.substring(5), 300, 278);
-            } else if(line.startsWith("Battery")) {
-                g2d.setFont(fontBold);
-                g2d.drawString("Battery:", 850, 278);
-                g2d.setFont(font);
-                g2d.drawString(line.substring(15), 1025, 278);
-                repeat = true;
-            } else if(line.startsWith("Firmware")) {
-                g2d.setFont(fontBold);
-                g2d.drawString("Firmware:", 500, 278);
-                g2d.setFont(font);
-                g2d.drawString(line.substring(10), 700, 278);
-                repeat = true;
-            } else if(line.startsWith("Firmware")) {
-                repeat = true;
+            } else {
+                date = in.readLine();
+
+                // Read lines that may not be there
+                boolean repeat = true;
+                while(repeat) {
+                    line = in.readLine();
+                    repeat = false;
+                    if(line.startsWith("ID")) {
+                        id = line.substring(5);
+                        repeat = true;
+                    } else if(line.startsWith("Battery")) {
+                        batteryLevel = line.substring(15);
+                        repeat = true;
+                    } else if(line.startsWith("Firmware")) {
+                        firmware = line.substring(10);
+                        repeat = true;
+                    } else if(line.startsWith("Polar")) {
+                        repeat = true;
+                    }
+                }
+                // The current line should be notes
+                notes = line;
+                // The next line is HR
+                devhr = in.readLine().substring(3);
+                // Next line is 3900 values 30.0 sec
+                String[] tokens = in.readLine().split(" ");
+                // int nValues = Integer.parseInt(tokens[0]);
+                duration = tokens[2] + " " + tokens[3];
+            }
+
+            // Read the ecg values
+            while((line = in.readLine()) != null) {
+                ecgList.add(Double.parseDouble(line));
+            }
+
+            // Convert to double array
+            ecgvals = new double[ecgList.size()];
+            for(int i = 0; i < ecgList.size(); i++) {
+                ecgvals[i] = ecgList.get(i);
             }
         }
 
-        // The current line should be notes
-        String notes = line;
-        g2d.setFont(fontBold);
-        g2d.drawString("Notes:", 850, 143);
-        g2d.setFont(font);
-        g2d.drawString(notes, 1025, 143);
-
-        String hr = in.readLine().substring(3);
-        g2d.setFont(fontBold);
-        g2d.drawString("Heart Rate:", 100, 233);
-        g2d.setFont(font);
-        g2d.drawString(hr, 300, 233);
-
-        String[] tokens = in.readLine().split(" ");
-        int values = Integer.parseInt(tokens[0]);
-        // Assuming duration is in seconds
-        double duration = Double.parseDouble(tokens[2]);
-        double valueStep = duration / values / .04;
-        String durationString = duration + " " + tokens[3];
-        g2d.setFont(fontBold);
-        g2d.drawString("Duration:", 500, 232);
-        g2d.setFont(font);
-        g2d.drawString(durationString, 700, 232);
-
-        String scale = "Scale: 25 mm/s, 10 mm/mV ";
-        g2d.setFont(fontInfo);
-        g2d.drawString(scale, 2075, 350);
-
-        // Do the icon
-        BufferedImage image = ImageIO.read(MakeEcgImage.class.getClassLoader()
+        // Get the logo
+        logo = ImageIO.read(MakeEcgImage.class.getClassLoader()
             .getResource("resources/polar_ecg.png"));
-        g2d.drawImage(image, 2050, 116, null);
-        g2d.setFont(fontLogo);
-        g2d.setPaint(new Color(211, 0, 36));
-        g2d.drawString("KE.Net ECG", 2170, 180);
 
-        // Draw the curves
-        AffineTransform scalingTransform = AffineTransform
-            .getScaleInstance(SCALE, SCALE);
-        g2d.setPaint(Color.BLACK);
-        g2d.transform(scalingTransform);
-        g2d.setStroke(new BasicStroke(CURVE_WIDTH));
-        g2d.setPaint(new Color(CURVE_COLOR, CURVE_COLOR, CURVE_COLOR));
-        int index = 0;
-        double y0 = 0, y;
-        double x0 = 0, x;
-        double offsetX = GRAPH_X;
-        double offsetY = GRAPH_Y + 30;
-        Line2D line2d = new Line2D.Double();
-        while((line = in.readLine()) != null) {
-            x = index * valueStep;
-            y = -10. * Double.parseDouble(line);
-            if(index == 0) {
-                x0 = x;
-                y0 = y;
-                index++;
-                continue;
-            } else if(index == 1040) {
-                offsetX -= 1040 * valueStep;
-                offsetY += 60;
-            } else if(index == 2080) {
-                offsetX -= 1040 * valueStep;
-                offsetY += 60;
-            } else if(index == 3120) {
-                offsetX -= 1040 * valueStep;
-                offsetY += 60;
-            } else if(index > 4160) {
-                // Handle writing to the next page
-                break;
-            }
-            line2d.setLine(x0 + offsetX, y0 + offsetY, x + offsetX,
-                y + offsetY);
-            // System.out.println((x0 + offsetX) + " " + (y0 + offsetY) + " "
-            // + (x + offsetX) + " " + (y + offsetY));
-            g2d.draw(line2d);
-            y0 = y;
-            x0 = x;
-            index++;
-        }
+        // Create the image
+        bi = EcgImage.createImage(samplingRate, logo, patientName, date, id,
+            firmware, batteryLevel, notes, devhr, calchr, nPeaks, duration,
+            ecgvals, peakvals);
 
         // Cleanup
-        in.close();
-        in = null;
         System.out.println("Processed " + file.getPath());
     }
 
@@ -278,26 +205,54 @@ public class MakeEcgImage
 
         System.out.println("MakeEcgImage");
         File[] inputFiles = openEcgFiles(null);
+        if(inputFiles == null || inputFiles.length == 0) {
+            System.out.println("No files chosen");
+            System.out.println();
+            System.out.println("Aborted");
+            return;
+        }
         for(File file : inputFiles) {
             if(file == null) {
                 System.out.println("Failed to process " + file);
             }
             System.out.println();
             System.out.println("Processing " + file);
-            BufferedImage bi = createImage();
+            bi = null;
             try {
-                processFile(file, bi);
+                processFile(file);
             } catch(Exception ex) {
                 System.out.println("Failed to process " + file);
                 ex.printStackTrace();
+                System.out.println();
+                System.out.println("Aborted");
                 continue;
             }
+
+            // Save the file
             File outputFile = new File(DEST_DIR + "/"
                 + file.getName().replaceFirst("[.][^.]+$", "") + ".png");
+            File saveFile = saveEcgFile(outputFile);
+            if(saveFile == null) {
+                System.out.println("No file to save");
+                System.out.println();
+                System.out.println("Aborted");
+            }
+            if(saveFile.exists()) {
+                int selection = JOptionPane.showConfirmDialog(null,
+                    "File already exists:" + LS + saveFile.getPath()
+                        + "\nOK to replace?",
+                    "Warning", JOptionPane.OK_CANCEL_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+                if(selection != JOptionPane.OK_OPTION) {
+                    System.out.println("Save canceled");
+                    continue;
+
+                }
+            }
             try {
-                saveImage(bi, outputFile);
+                saveImage(bi, saveFile);
             } catch(Exception ex) {
-                System.out.println("Failed to save " + outputFile);
+                System.out.println("Failed to save " + saveFile);
                 ex.printStackTrace();
                 System.out.println();
                 System.out.println("Aborted");
