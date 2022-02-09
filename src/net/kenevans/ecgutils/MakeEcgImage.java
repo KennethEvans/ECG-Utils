@@ -78,7 +78,7 @@ public class MakeEcgImage
         String notes = "NA";
         String devhr = "NA";
         String calchr = "NA";
-        String nPeaks = "NA";
+        String npeaks = "NA";
         String duration = "NA";
         double[] ecgvals = null;
         boolean[] peakvals = null;
@@ -92,16 +92,23 @@ public class MakeEcgImage
 
         // Reset to the beginning
         List<Double> ecgList = new ArrayList<>();
+        List<Boolean> peakList = new ArrayList<>();
         boolean header = true;
+        String[] tokens;
         try (BufferedReader in = new BufferedReader(new FileReader(file))) {
             String line = "";
             if(newFormat) {
                 while(header) {
                     line = in.readLine();
+                    tokens = line.split(",");
+                    if(tokens.length == 0) continue;
                     try {
-                        Double.parseDouble(line);
+                        Double.parseDouble(tokens[0]);
                         header = false;
-                        ecgList.add(Double.parseDouble(line));
+                        ecgList.add(Double.parseDouble(tokens[0]));
+                        if(tokens.length > 1) {
+                            peakList.add(tokens[1].equals("0") ? false : true);
+                        }
                     } catch(NumberFormatException ex) {
                         header = true;
                     }
@@ -119,6 +126,8 @@ public class MakeEcgImage
                             devhr = line.substring(start);
                         } else if(line.startsWith("stopcalculatedhr")) {
                             calchr = line.substring(start);
+                        } else if(line.startsWith("npeaks")) {
+                            npeaks = line.substring(start);
                         } else if(line.startsWith("devicename")) {
                             // Do nothing
                         } else if(line.startsWith("deviceid")) {
@@ -159,20 +168,38 @@ public class MakeEcgImage
                 // The next line is HR
                 devhr = in.readLine().substring(3);
                 // Next line is 3900 values 30.0 sec
-                String[] tokens = in.readLine().split(" ");
+                tokens = in.readLine().split(" ");
                 // int nValues = Integer.parseInt(tokens[0]);
                 duration = tokens[2] + " " + tokens[3];
             }
 
             // Read the ecg values
             while((line = in.readLine()) != null) {
-                ecgList.add(Double.parseDouble(line));
+                tokens = line.split(",");
+                ecgList.add(Double.parseDouble(tokens[0]));
+                if(tokens.length > 1) {
+                    peakList.add(tokens[1].equals("0") ? false : true);
+                }
             }
 
-            // Convert to double array
-            ecgvals = new double[ecgList.size()];
+            // Convert ecg to double array
+            int nSamples = ecgList.size();
+            ecgvals = new double[nSamples];
             for(int i = 0; i < ecgList.size(); i++) {
                 ecgvals[i] = ecgList.get(i);
+            }
+            // Convert peaks to a boolean array
+            if(peakList.isEmpty()) {
+                peakvals = null;
+            } else if(peakList.size() != nSamples) {
+                peakvals = null;
+                System.out.println("!!! ecgList.size=" + nSamples
+                    + " peakList.size=" + peakList.size());
+            } else {
+                peakvals = new boolean[nSamples];
+                for(int i = 0; i < nSamples; i++) {
+                    peakvals[i] = peakList.get(i);
+                }
             }
         }
 
@@ -182,7 +209,7 @@ public class MakeEcgImage
 
         // Create the image
         bi = EcgImage.createImage(samplingRate, logo, patientName, date, id,
-            firmware, batteryLevel, notes, devhr, calchr, nPeaks, duration,
+            firmware, batteryLevel, notes, devhr, calchr, npeaks, duration,
             ecgvals, peakvals);
 
         // Cleanup
